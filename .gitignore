@@ -1,0 +1,24 @@
+# Secrets and local config
+.env
+
+# Your documents and run results
+data/
+output/*
+!output/.gitkeep
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Node / UI build
+studio/web/node_modules/
+studio/web/dist/
+studio/web/.vite/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

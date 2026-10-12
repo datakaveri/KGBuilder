@@ -1,0 +1,60 @@
+# KG Studio
+#
+#   cp .env.example .env              # then point LLM_* at your model
+#   docker compose up -d --build      # UI + API on http://localhost:8000
+#
+# No LLM server of your own? Run a bundled Ollama too (pulls LLM_MODEL on first start):
+#   set LLM_BASE_URL=http://ollama:11434 in .env, then
+#   docker compose --profile ollama up -d --build
+
+name: kg-studio
+
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: studio/Dockerfile
+    image: kg-studio:latest
+    ports:
+      - "${STUDIO_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./output:/app/output          # every run's graph.json / graph.graphml / metrics.json lands here
+      - hf-cache:/opt/hf              # embedding models (pre-baked default; others download once)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach an LLM running on the host (Linux needs this)
+    restart: unless-stopped
+
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:${OLLAMA_VERSION:-0.12.3}
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+    # NVIDIA GPU: uncomment (requires the NVIDIA Container Toolkit)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+
+  ollama-pull:
+    profiles: ["ollama"]
+    image: ollama/ollama:${OLLAMA_VERSION:-0.12.3}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "${LLM_MODEL:-qwen2.5:7b-instruct}"]
+    restart: "no"
+
+volumes:
+  hf-cache:
+  ollama:

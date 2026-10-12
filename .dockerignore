@@ -1,0 +1,13 @@
+# Only studio/ is needed to build the image.
+**/.git
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/*.egg-info
+.env
+output/
+data/
+studio/web/dist/
+studio/docs/
